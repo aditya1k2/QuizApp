@@ -9,6 +9,16 @@
         android:layout_height="match_parent"
         android:padding="16dp">
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/quizCl"
             android:layout_width="match_parent"
@@ -27,6 +37,7 @@
                 android:id="@+id/questionRV"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
+                android:layout_marginTop="16dp"
                 app:layout_constraintBottom_toTopOf="@id/nextBtn"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -39,6 +50,15 @@
                 android:text="Next"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
+
+            <ImageButton
+                android:id="@+id/bookmarkBtn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/ic_bookmark"
+                app:layout_constraintBottom_toBottomOf="@id/nextBtn"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/nextBtn" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -3,25 +3,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/HomeFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.example.quizapp.ui.fragment.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/HomeFragment"
+        android:name="com.example.quizapp.ui.fragment.HomeFragment"
+        android:label="@string/home_fragment_label"
+        tools:layout="@layout/fragment_home">
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_HomeFragment_to_SecondFragment"
+            app:destination="@id/QuizFragment" />
+        <action
+            android:id="@+id/action_HomeFragment_to_BookmarkFragment"
+            app:destination="@id/BookmarkFragment" />
     </fragment>
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.example.quizapp.ui.fragment.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/QuizFragment"
+        android:name="com.example.quizapp.ui.fragment.QuizFragment"
+        android:label="@string/quiz_fragment_label"
+        tools:layout="@layout/fragment_quiz">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            android:id="@+id/action_QuizFragment_to_HomeFragment"
+            app:destination="@id/HomeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/BookmarkFragment"
+        android:name="com.example.quizapp.ui.fragment.BookMarkFragment"
+        android:label="@string/quiz_fragment_label"
+        tools:layout="@layout/fragment_book_mark">
+
+
+        <action
+            android:id="@+id/action_BookmarkFragment_to_HomeFragment"
+            app:destination="@id/HomeFragment" />
     </fragment>
 </navigation>

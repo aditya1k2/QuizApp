@@ -26,5 +26,6 @@ data class QuestionListItem(
     val sort: Int? = null,
     @SerializedName("uuidIdentifier")
     val uuidIdentifier: String? = null,
-    var selectedOption: Int? = null
+    var selectedOption: Int? = null,
+    var checkedId: Int? = null
 ) : Serializable

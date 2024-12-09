@@ -1,5 +1,6 @@
 package com.example.quizapp.ui.adapter
 
+import android.text.method.ScrollingMovementMethod
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -7,13 +8,15 @@ import com.example.quizapp.data.model.QuestionListItem
 import com.example.quizapp.databinding.ItemQuestionBinding
 
 class QuestionRecyclerViewAdapter(
-    private val questions: ArrayList<QuestionListItem>
+    private val questions: ArrayList<QuestionListItem> = arrayListOf(),
+    val selectedOption: (position: Int, selectedOption: Int) -> Unit
 ) : RecyclerView.Adapter<QuestionRecyclerViewAdapter.QuestionViewHolder>() {
 
-    class QuestionViewHolder(private val binding: ItemQuestionBinding) :
+    class QuestionViewHolder(val binding: ItemQuestionBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(question: QuestionListItem) {
             binding.questionText.text = question.question
+            binding.questionText.movementMethod = ScrollingMovementMethod()
             binding.optionsGroup.clearCheck()
             // Dynamically add options to the RadioGroup
             binding.option1Rb.text = question.option1
@@ -21,19 +24,11 @@ class QuestionRecyclerViewAdapter(
             binding.option3Rb.text = question.option3
             binding.option4Rb.text = question.option4
 
-            // Clear any previous listeners to avoid multiple triggers
-            binding.optionsGroup.setOnCheckedChangeListener(null)
-            // Restore selected state
-            question.selectedOption?.let { selectedIndex ->
-                binding.optionsGroup.check(selectedIndex)
-            } ?: binding.optionsGroup.clearCheck()
 
-            // Save selected state when user interacts
-            binding.optionsGroup.setOnCheckedChangeListener { _, checkedId ->
-                if (checkedId != -1) {
-                    question.selectedOption = checkedId
-                }
-            }
+            // Restore selected state
+            question.checkedId?.let { checkedId ->
+                binding.optionsGroup.check(checkedId)
+            } ?: binding.optionsGroup.clearCheck()
         }
     }
 
@@ -44,8 +39,17 @@ class QuestionRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: QuestionViewHolder, position: Int) {
         val question = questions[position]
+        // Clear any previous listeners to avoid multiple triggers
+        holder.binding.optionsGroup.setOnCheckedChangeListener(null)
+        // Save selected state when user interacts
+        holder.binding.optionsGroup.setOnCheckedChangeListener { radioGroup, checkedId ->
+            val selectedPosition = radioGroup.indexOfChild(holder.binding.root.findViewById(checkedId))
+            if (checkedId != -1) {
+                questions[position].checkedId = checkedId
+                selectedOption(position, selectedPosition + 1)
+            }
+        }
         holder.bind(question = question)
-
     }
 
     override fun getItemCount(): Int = questions.size

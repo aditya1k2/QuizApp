@@ -1,6 +1,10 @@
 package com.example.quizapp.di
 
+import android.content.Context
+import androidx.room.Room
 import com.example.quizapp.data.api.ApiService
+import com.example.quizapp.data.dao.BookmarkDao
+import com.example.quizapp.data.dao.BookmarkDatabase
 import com.example.quizapp.data.repoImpl.RepositoryImpl
 import com.example.quizapp.domain.repository.Repository
 import com.google.gson.Gson
@@ -8,6 +12,7 @@ import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -40,8 +45,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideNewsRepository(apiService: ApiService): Repository {
-        return RepositoryImpl(apiService)
+    fun provideNewsRepository(apiService: ApiService, bookmarkDao: BookmarkDao): Repository {
+        return RepositoryImpl(apiService, bookmarkDao)
     }
 
 
@@ -56,5 +61,21 @@ object AppModule {
     @Provides
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideDatabase(@ApplicationContext context: Context): BookmarkDatabase {
+        return Room.databaseBuilder(
+            context.applicationContext,
+            BookmarkDatabase::class.java,
+            "bookmark_database"
+        ).build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideBookmarkDao(database: BookmarkDatabase): BookmarkDao {
+        return database.bookmarkDao()
     }
 }

@@ -1,6 +1,7 @@
 package com.example.quizapp.ui.fragment
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -16,36 +17,32 @@ import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quizapp.R
 import com.example.quizapp.data.ApiResult
+import com.example.quizapp.data.model.Bookmark
 import com.example.quizapp.data.model.QuestionListItem
-import com.example.quizapp.databinding.FragmentSecondBinding
+import com.example.quizapp.databinding.FragmentQuizBinding
 import com.example.quizapp.ui.adapter.QuestionRecyclerViewAdapter
 import com.example.quizapp.ui.viewModel.QuizViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
 @AndroidEntryPoint
-class SecondFragment : Fragment() {
+class QuizFragment : Fragment() {
 
-    private var _binding: FragmentSecondBinding? = null
+    private lateinit var mBinding: FragmentQuizBinding
     private val mViewModel: QuizViewModel by viewModels()
     private lateinit var mQuestionAdapter: QuestionRecyclerViewAdapter
     private lateinit var mQuestionList: ArrayList<QuestionListItem>
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSecondBinding.inflate(inflater, container, false)
-        return binding.root
+        mBinding = FragmentQuizBinding.inflate(inflater, container, false)
+        return mBinding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -53,44 +50,67 @@ class SecondFragment : Fragment() {
         collectData()
         mViewModel.getQuestionList()
 
-        mQuestionAdapter = QuestionRecyclerViewAdapter(arrayListOf())
+        mQuestionAdapter = QuestionRecyclerViewAdapter(selectedOption = { position, selectedOption ->
+                mQuestionList[position].selectedOption = selectedOption
+        })
         val layoutMan = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        _binding?.questionRV?.apply {
+        mBinding.questionRV.apply {
             adapter = mQuestionAdapter
             layoutManager = layoutMan
         }
         // Attach PageSnapHelper for swipeable paging behavior
         val snapHelper = PagerSnapHelper()
-        snapHelper.attachToRecyclerView(_binding?.questionRV)
+        snapHelper.attachToRecyclerView(mBinding.questionRV)
 
-        _binding?.nextBtn?.setOnClickListener {
+        mBinding.nextBtn.setOnClickListener {
             val currentPosition = layoutMan.findFirstVisibleItemPosition()
             if (currentPosition < mQuestionList.size - 1) {
-                _binding?.questionRV?.smoothScrollToPosition(currentPosition + 1)
+                mBinding.questionRV.smoothScrollToPosition(currentPosition + 1)
             } else {
-                //TODO :- Submit quiz or navigate to results
                 Toast.makeText(context, "Quiz Submitted!", Toast.LENGTH_SHORT).show()
                 calculateResult()
             }
         }
 
-        _binding?.questionRV?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        mBinding.bookmarkBtn.setOnClickListener {
+            val currentPosition = layoutMan.findFirstVisibleItemPosition()
+            val currentQuestion = mQuestionList[currentPosition]
+            mViewModel.insertBookmark(
+                Bookmark(
+                    question = currentQuestion.question ?: "",
+                    option1 = currentQuestion.option1 ?: "",
+                    option2 = currentQuestion.option2 ?: "",
+                    option3 = currentQuestion.option3 ?: "",
+                    option4 = currentQuestion.option4 ?: "",
+                    questionUUID = currentQuestion.uuidIdentifier ?: "",
+                    selectedOption = currentQuestion.selectedOption,
+                )
+            )
+            currentQuestion.uuidIdentifier?.let { it1 -> mViewModel.isQuestionBookmarked(it1) }
+        }
+
+        mBinding.questionRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     val currentPosition = layoutMan.findFirstVisibleItemPosition()
-
-                    // Enable the Next button if not on the last question
-//                    _binding?.nextBtn?.isEnabled = currentPosition < mQuestionList.size - 1
-                    // Disable Next button on the last question
+                    mQuestionList[currentPosition].uuidIdentifier?.let {
+                        mViewModel.isQuestionBookmarked(
+                            it
+                        )
+                    }
                     if (currentPosition == mQuestionList.size - 1) {
-                        _binding?.nextBtn?.text = "Submit"
+                        mBinding.nextBtn.text = getString(R.string.submit)
                     } else {
-                        _binding?.nextBtn?.text = "Next"
+                        mBinding.nextBtn.text = getString(R.string.next)
                     }
                 }
             }
         })
+
+        mBinding.continuBtn.setOnClickListener {
+            findNavController().navigate(R.id.action_QuizFragment_to_HomeFragment)
+        }
     }
 
     private fun calculateResult() {
@@ -98,18 +118,14 @@ class SecondFragment : Fragment() {
             val totalNoOfQuestions = mQuestionList.size
             var totalCorrectAns = 0
             mQuestionList.forEach {
-                if(it.correctOption == it.selectedOption){
+                if (it.correctOption == it.selectedOption) {
                     totalCorrectAns++
                 }
             }
-            _binding?.quizCl?.visibility = View.GONE
-            _binding?.ansCl?.visibility = View.VISIBLE
-
-            _binding?.ansTv?.text = "${totalCorrectAns} / ${totalNoOfQuestions} \n Correct"
-
+            mBinding.quizCl.visibility = View.GONE
+            mBinding.ansCl.visibility = View.VISIBLE
+            mBinding.ansTv.text = "${totalCorrectAns} / ${totalNoOfQuestions} \nCorrect"
         }
-
-
     }
 
     private fun collectData() {
@@ -118,25 +134,39 @@ class SecondFragment : Fragment() {
                 mViewModel.questionList.collect {
                     when (it) {
                         is ApiResult.Error -> {
-
+                            mBinding.progressBar.visibility = View.GONE
+                            mBinding.quizCl.visibility = View.GONE
                         }
 
                         is ApiResult.Loading -> {
+                            mBinding.progressBar.visibility = View.VISIBLE
+                            mBinding.quizCl.visibility = View.GONE
 
                         }
 
                         is ApiResult.Success -> {
+                            mBinding.progressBar.visibility = View.GONE
+                            mBinding.quizCl.visibility = View.VISIBLE
+
                             mQuestionList = it.data ?: arrayListOf()
-                            mQuestionAdapter.updateData(it.data ?: arrayListOf())
+                            mQuestionAdapter.updateData(mQuestionList)
                         }
                     }
                 }
             }
         }
-    }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mViewModel.isQuestionBookmarked.collect {
+                    if (it) {
+                        mBinding.bookmarkBtn.setImageResource(R.drawable.ic_bookmark_filled)
+                    } else {
+                        mBinding.bookmarkBtn.setImageResource(R.drawable.ic_bookmark)
+
+                    }
+                }
+            }
+        }
     }
 }

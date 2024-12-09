@@ -34,32 +34,8 @@ class MainActivity : AppCompatActivity() {
         mBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
         mNavController = findNavController(R.id.nav_host_fragment_content_main)
-
-//        appBarConfiguration = AppBarConfiguration(navController.graph)
-//        setupActionBarWithNavController(navController, appBarConfiguration)
     }
 
-    private fun collectData() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                mViewModel.questionList.collect {
-                    when (it) {
-                        is ApiResult.Error -> {
-                            Log.d("####", "Error ${it.message}")
-                        }
-
-                        is ApiResult.Loading -> {
-                            Log.d("####", "Loading")
-                        }
-
-                        is ApiResult.Success -> {
-                            Log.d("####", "Success ${it.data}")
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
